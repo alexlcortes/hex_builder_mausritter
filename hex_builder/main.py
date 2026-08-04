@@ -100,6 +100,23 @@ LANDMARKS = {
     ],
 }
 
+HAZARD_CHOICES = ["strength", "dexterity", "willpower"]
+
+HAZARDS = {
+    "choking woodland": HAZARD_CHOICES,
+    "stinging leaves": HAZARD_CHOICES,
+    "forgotten traps": HAZARD_CHOICES,
+    "razor rocks": HAZARD_CHOICES,
+    "carrion birds": HAZARD_CHOICES,
+    "salt bog": HAZARD_CHOICES,
+    "barbed gorge": HAZARD_CHOICES,
+    "sticky weeds": HAZARD_CHOICES,
+    "steam holes": HAZARD_CHOICES,
+    "raging rapids": HAZARD_CHOICES,
+    "toxic air": HAZARD_CHOICES,
+    "spiked walls": HAZARD_CHOICES,
+}
+
 # Store generated numbered hex entries here.
 generated_hex_types: list[str] = []
 
@@ -115,6 +132,27 @@ def random_landmark_for_type(hex_type: str) -> tuple[int, str]:
         raise ValueError(f"Unknown hex type: {hex_type}")
     row = random.randint(1, len(LANDMARKS[hex_type]))
     return row, LANDMARKS[hex_type][row - 1]
+
+
+def random_hazard() -> str:
+    """Pick a random hazard from the hazard table."""
+    return random.choice(list(HAZARDS.keys()))
+
+
+def hazard_choices(hazard: str) -> list[str]:
+    """Return the available choices for a given hazard."""
+    if hazard not in HAZARDS:
+        raise ValueError(f"Unknown hazard: {hazard}")
+    return HAZARDS[hazard]
+
+
+def choose_hazard_option(hazard: str, choice: str) -> str:
+    """Validate a player choice for a hazard."""
+    options = hazard_choices(hazard)
+    normalized = choice.lower()
+    if normalized not in options:
+        raise ValueError(f"Invalid choice '{choice}'. Valid options: {', '.join(options)}")
+    return normalized
 
 
 def generate_hex_map(count: int = 1) -> list[str]:
@@ -135,3 +173,7 @@ if __name__ == "__main__":
     for entry in hex_map:
         print(entry)
     print("Stored hex types:", generated_hex_types)
+
+    hazard = random_hazard()
+    print("\nEncountered hazard:", hazard)
+    print("Available choices:", ", ".join(hazard_choices(hazard)))
