@@ -1,4 +1,6 @@
-/*
-\!.gitignore
-\!hex_builder/
-\!hex_builder/**
+*
+!.gitignore
+!README.md
+!LICENSE
+!hex_builder/
+!hex_builder/**
