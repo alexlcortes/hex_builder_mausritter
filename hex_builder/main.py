@@ -177,6 +177,16 @@ def print_character_status(character: dict[str, object]) -> None:
         print(f"{stat_name.capitalize()}: {stat_value}")
 
 
+def prompt_for_choice(prompt: str, character: dict[str, object]) -> str:
+    """Prompt the player for a command, with 's' showing the character status."""
+    while True:
+        choice = input(prompt).strip().lower()
+        if choice == "s":
+            print_character_status(character)
+            continue
+        return choice
+
+
 def random_hex_type() -> str:
     """Select a random hex type from the available terrain options."""
     # Choose one of the terrain categories defined at the top of the file.
@@ -271,7 +281,7 @@ def generate_hex_entry() -> dict[str, str]:
     }
 
 
-def choose_direction() -> tuple[str, tuple[int, int]] | None:
+def choose_direction(character: dict[str, object]) -> tuple[str, tuple[int, int]] | None:
     """Ask the player to choose a direction for the next hex."""
     # Show the available movement options and validate the player's choice.
     print("\nChoose a direction to move into the next hex:")
@@ -279,7 +289,7 @@ def choose_direction() -> tuple[str, tuple[int, int]] | None:
         print(f"  {number} - {name}")
 
     while True:
-        choice = input("Direction [1-6/q]: ").strip().lower()
+        choice = prompt_for_choice("Direction [1-6/s/q]: ", character)
         if choice == "q":
             return None
         if choice in HEX_DIRECTIONS:
@@ -316,11 +326,13 @@ if __name__ == "__main__":
 
     # Main gameplay loop: move through hexes, resolve challenges, and rest when required.
     while True:
-        direction_choice = choose_direction()
+        # Ask the player which direction to move next.
+        direction_choice = choose_direction(character)
         if direction_choice is None:
             print("\nJourney ended.")
             break
 
+        # Calculate the next position based on the selected direction.
         direction_name, delta = direction_choice
         next_position = (position[0] + delta[0], position[1] + delta[1])
         next_key = hex_key(next_position)
@@ -339,10 +351,12 @@ if __name__ == "__main__":
         print(f"stat for this challenge: {entry['stat']}")
         print(f"Current HP: {character['hp']}")
         if revisited:
+            # Let the player know they have encountered this hex before.
             print(f"This is a previously visited hex. The same {entry['kind']} remains.")
 
+        # Ask whether the player wants to enter and challenge this hex.
         while True:
-            challenge_choice = input("Do you wish to challenge this hex? (y/n/q) ").strip().lower()
+            challenge_choice = prompt_for_choice("Do you wish to challenge this hex? (y/n/s/q) ", character)
             if challenge_choice == "y":
                 position = next_position
                 visited_positions.add(position)
@@ -366,6 +380,7 @@ if __name__ == "__main__":
         if challenge_choice == "q":
             break
 
+        # Resolve the challenge and describe the outcome.
         success, roll, damage, soaked, remaining = resolve_challenge(character, entry["stat"], entry["kind"])
         print(f"You rolled {roll} against {entry['stat']}.")
         if success:
@@ -386,11 +401,11 @@ if __name__ == "__main__":
                     visited_positions.add(position)
                     hex_number += 1
                     watch_count += 1
-                    print(f"The curse drifts you {drift_name} to a random hex at {position}.")
+                    print(f"The curse has taken hold. You get lost and drift {drift_name} to a random hex at {position}, and lose an entire watch.")
                     print(f"Visited hexes: {len(visited_positions)}")
                 else:
                     watch_count += 1
-                    print("The curse slows you down. This hex takes two watches to move through.")
+                    print("The curse has taken hold. You lose a watch and this hex takes two watches to move through.")
                     if watch_count >= 3:
                         print("You have passed the rest threshold without resting.")
                         watch_count -= 3
@@ -406,17 +421,22 @@ if __name__ == "__main__":
         print(f"Current {entry['stat']}: {character['stats'][entry['stat']]}")
         print(f"Current HP: {character['hp']}")
 
+        # Check whether the character has died from a stat loss.
         if any(value <= 0 for value in character["stats"].values()):
             print("\nOne of your stats has dropped to 0. You are dead.")
             print("Game over.")
             break
 
+        # If enough watches have passed, offer the player a chance to rest.
         if watch_count >= 3:
             watch_count = 0
             print("\nYou have completed three watches.")
             print_character_status(character)
             while True:
-                rest_choice = input("Rest for the night and reset HP, or keep going and suffer 1d6 damage to a random stat? (y/n/q) ").strip().lower()
+                rest_choice = prompt_for_choice(
+                    "Rest for the night and reset HP, or keep going and suffer 1d6 damage to a random stat? (y/n/s/q) ",
+                    character,
+                )
                 if rest_choice == "y":
                     character["hp"] = roll_hp()
                     print(f"You rest and recover HP to {character['hp']}.")
