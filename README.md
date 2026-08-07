@@ -1,6 +1,7 @@
 # Python Adventure Hex Builder
 
 A small Python app for generating one or more random hex terrain types and matching landmark entries for Mausritter-style game sessions.
+Added some randomize hex travel rules and character stats to actually simulate a hex crawl.
 
 ## Features
 
