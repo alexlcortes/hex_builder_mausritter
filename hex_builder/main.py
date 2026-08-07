@@ -1,5 +1,6 @@
 import random
 
+# Core game data used to generate random hexes and challenges.
 HEX_TYPES = [
     "countryside",
     "countryside",
@@ -100,8 +101,10 @@ LANDMARKS = {
     ],
 }
 
+# The three primary stats that can be affected by hazards and curses.
 HAZARD_STATS = ["strength", "dexterity", "willpower"]
 
+# Possible hazards that can appear in a hex.
 HAZARDS = [
     "choking woodland",
     "stinging leaves",
@@ -117,6 +120,7 @@ HAZARDS = [
     "spiked walls",
 ]
 
+# Possible curses that can appear in a hex.
 CURSES = [
     "ice mist",
     "shifting pits",
@@ -134,6 +138,7 @@ CURSES = [
 
 def roll_stat() -> int:
     """Generate a single character stat using 3d6."""
+    # Roll three six-sided dice and sum the result.
     return sum(random.randint(1, 6) for _ in range(3))
 
 
@@ -153,6 +158,7 @@ def generate_stats() -> dict[str, int]:
 
 def create_character(name: str) -> dict[str, object]:
     """Create a player character sheet with a name, stats, and HP."""
+    # Use the supplied name, or fall back to a default if it is blank.
     return {
         "name": name.strip() or "Player",
         "hp": roll_hp(),
@@ -162,6 +168,7 @@ def create_character(name: str) -> dict[str, object]:
 
 def print_character_status(character: dict[str, object]) -> None:
     """Print the current character status including HP and main stats."""
+    # Show the full character sheet in a readable block.
     print("\nCurrent player status")
     print("---------------------")
     print(f"Name: {character['name']}")
@@ -172,11 +179,13 @@ def print_character_status(character: dict[str, object]) -> None:
 
 def random_hex_type() -> str:
     """Select a random hex type from the available terrain options."""
+    # Choose one of the terrain categories defined at the top of the file.
     return random.choice(HEX_TYPES)
 
 
 def random_landmark_for_type(hex_type: str) -> tuple[int, str]:
     """Roll a d20 on the landmark table and return the corresponding landmark."""
+    # Pick a random landmark from the matching terrain list.
     if hex_type not in LANDMARKS:
         raise ValueError(f"Unknown hex type: {hex_type}")
     row = random.randint(1, len(LANDMARKS[hex_type]))
@@ -200,6 +209,7 @@ def random_challenge_stat() -> str:
 
 def random_obstacle() -> tuple[str, str]:
     """Choose either a hazard or a curse and return its kind and name."""
+    # A random decision determines whether the hex contains a hazard or a curse.
     if random.choice([True, False]):
         return "hazard", random_hazard()
     return "curse", random_curse()
@@ -222,6 +232,7 @@ def roll_d20() -> int:
 def resolve_challenge(
     character: dict[str, object], chosen_stat: str, kind: str = "hazard"
 ) -> tuple[bool, int, int, int, int]:
+    # Resolve the challenge by comparing the roll to the chosen stat.
     """Resolve a challenge by rolling under the chosen stat.
 
     Hazards deal damage on failure; curses do not.
@@ -246,6 +257,7 @@ def resolve_challenge(
 
 def generate_hex_entry() -> dict[str, str]:
     """Generate a single hex entry with landmark, obstacle kind, and stat."""
+    # Build the data for one hex so the main loop can describe it clearly.
     hex_type = random_hex_type()
     _, landmark = random_landmark_for_type(hex_type)
     kind, obstacle = random_obstacle()
@@ -261,6 +273,7 @@ def generate_hex_entry() -> dict[str, str]:
 
 def choose_direction() -> tuple[str, tuple[int, int]] | None:
     """Ask the player to choose a direction for the next hex."""
+    # Show the available movement options and validate the player's choice.
     print("\nChoose a direction to move into the next hex:")
     for number, (name, _) in HEX_DIRECTIONS.items():
         print(f"  {number} - {name}")
@@ -276,10 +289,12 @@ def choose_direction() -> tuple[str, tuple[int, int]] | None:
 
 def hex_key(position: tuple[int, int]) -> str:
     """Return a consistent key for a hex position."""
+    # Store positions in a simple coordinate format for easy lookup.
     return f"{position[0]},{position[1]}"
 
 
 if __name__ == "__main__":
+    # Start the game by creating the player character and setting up the journey state.
     player_name = input("Enter your character name: ").strip()
     character = create_character(player_name)
 
@@ -299,6 +314,7 @@ if __name__ == "__main__":
     print(f"Starting position: {position}")
     print(f"Visited hexes: {len(visited_positions)}")
 
+    # Main gameplay loop: move through hexes, resolve challenges, and rest when required.
     while True:
         direction_choice = choose_direction()
         if direction_choice is None:
@@ -326,8 +342,8 @@ if __name__ == "__main__":
             print(f"This is a previously visited hex. The same {entry['kind']} remains.")
 
         while True:
-            challenge_choice = input("Do you wish to challenge this hex? (yes/no/q) ").strip().lower()
-            if challenge_choice in {"yes", "y"}:
+            challenge_choice = input("Do you wish to challenge this hex? (y/n/q) ").strip().lower()
+            if challenge_choice == "y":
                 position = next_position
                 visited_positions.add(position)
                 hex_number += 1
@@ -336,16 +352,16 @@ if __name__ == "__main__":
                 print(f"Moved {direction_name} into this hex.")
                 print(f"Visited hexes: {len(visited_positions)}")
                 break
-            if challenge_choice in {"no", "n"}:
+            if challenge_choice == "n":
                 print("You retreat to the previous hex.")
                 break
             if challenge_choice == "q":
                 print("\nJourney ended.")
                 direction_choice = None
                 break
-            print("Please answer 'yes', 'no', or 'q'.")
+            print("Please answer 'y', 'n', or 'q'.")
 
-        if challenge_choice in {"no", "n"}:
+        if challenge_choice == "n":
             continue
         if challenge_choice == "q":
             break
@@ -400,12 +416,12 @@ if __name__ == "__main__":
             print("\nYou have completed three watches.")
             print_character_status(character)
             while True:
-                rest_choice = input("Rest for the night and reset HP, or keep going and suffer 1d6 damage to a random stat? (yes/no/q) ").strip().lower()
-                if rest_choice in {"yes", "y"}:
+                rest_choice = input("Rest for the night and reset HP, or keep going and suffer 1d6 damage to a random stat? (y/n/q) ").strip().lower()
+                if rest_choice == "y":
                     character["hp"] = roll_hp()
                     print(f"You rest and recover HP to {character['hp']}.")
                     break
-                if rest_choice in {"no", "n"}:
+                if rest_choice == "n":
                     lost_stat = random.choice(HAZARD_STATS)
                     lost_amount = random.randint(1, 6)
                     character["stats"][lost_stat] = max(0, character["stats"][lost_stat] - lost_amount)
@@ -420,6 +436,6 @@ if __name__ == "__main__":
                     print("\nJourney ended.")
                     direction_choice = None
                     break
-                print("Please answer 'yes', 'no', or 'q'.")
+                print("Please answer 'y', 'n', or 'q'.")
             if direction_choice is None:
                 break
